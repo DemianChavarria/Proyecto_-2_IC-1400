@@ -11,30 +11,25 @@ Limpiar_consola db "clear", 0
 Salir_juego db "exit", 0
 
 ; VARIABLES DE main:
-mostrar_menu db 10, "Entrando al Buscaminas...", 10, 10   ; pantalla de Menu
-    db "1. Jugar", 10
-    db "2. Manual del juego", 10
-    db "3. Salir del juego", 10, 10, 0
-mostrar_menu_mal db 10, "Su opcion fue invalida, Seleccione el numero de la opcion en pantalla...", 10, 10
-    db "1. Jugar", 10                            ; Pantalla del menu al incluir un dato no valido
-    db "2. Manual del juego", 10
+mostrar_menu db 10, "Entrando al Buscaminas...", 10, 10, 0
+menu_invalido db 10, "Su opcion fue invalida, Seleccione el numero de la opcion en pantalla...", 10, 10, 0
+opciones_menu db "1. Jugar", 10
+    db "2. Manual de controles", 10
     db "3. Salir del juego", 10, 10, 0
 
 ; VARIABLES DE _Jugar:
-mostrar_dificultad db 10, "Se debe seleccionar la dificultad del juego...", 10, 10
-    db "1. Dificultad Principiante", 10              ; Pantalla menu de la dificultad del juego 
+mostrar_dificultad db 10, "Se debe seleccionar la dificultad del juego...", 10, 10, 0
+mostrar_dificultad_mal db 10, "Su opcion fue invalida, elija el numero de la opcion en pantalla...", 10, 10, 0
+opciones_Jugar db "1. Dificultad Principiante", 10        
     db "2. Dificultad Intermedio", 10
     db "3. Dificultad Infierno", 10
     db "4. Volver al menu", 10, 10, 0
-mostrar_dificultad_mal db 10, "Su opcion fue invalida, elija el numero de la opcion en pantalla...", 10, 10
-    db "1. Dificultad Principiante", 10              ; Pantalla menu de la dificultad del juego, al ingresar un dato invalido
-    db "2. Dificultad Intermedio", 10
-    db "3. Dificultad Infierno", 10
-    db "4. Volver al menu", 10, 10, 0
+
+; VARIABLES DE _Manual
 
 
 ; MENSAJE INPUT
-mensaje_opcion db "Ingrese su Opcion:", 0  
+mensaje_opcion db "Ingrese su Opcion: ", 0  
 opcion db "%d", 0
 
 
@@ -50,27 +45,31 @@ section .text
 global main
 
 ; Menu del Minijuego
-cuando es llamado, retorna el menu, que en este caso seria el principal
+; cuando es llamado, retorna el menu, que en este caso seria el principal
 main:
     push Limpiar_consola   ; limpia la consosla
     call system
     add esp, 4
 
-    push mostrar_menu    ; muestra el menu 
+    ; muestra el menu principal
+    push mostrar_menu  
+    call printf    
+    push opciones_menu
+    call printf
+    add esp, 8
+
+    ; se muestra el mensaje para que el usuario elija una de las opciones
+    ; #R: solo numeros
+    push mensaje_opcion
     call printf
     add esp, 4
 
-    push mensaje_opcion  ; muestra un mensaje para que el user elija una opcion
-    call printf
-    add esp, 4
-
-    ; opcion del usuario en el menu de juego
+    ; la opcion del usuario se guarda en este bloque
     push eleccion
     push opcion
     call scanf
     add esp, 4
-
-    mov eax, [eleccion]
+        mov eax, [eleccion]
     
     ; IF
     IF:
@@ -78,11 +77,11 @@ main:
         cmp eax, ebx
         je _Jugar
 
-        mov ebx, 2 ; Selecciono el manual de instrucciones
+        mov ebx, 2 ; si el User elige 2, llama a la funcion _Manual
         cmp eax, ebx
         je _Manual
 
-        mov ebx, 3 ; Selecciono salir del juego
+        mov ebx, 3 ; si el User elige 1, llama a la funcion _Salir
         cmp eax, ebx
         je _salir
 
@@ -91,23 +90,28 @@ main:
     call system
     add esp, 4
 
-    push mostrar_menu_mal ; muestra el mismo menu pero indicando al usuario las opciones en pantalla
-    call printf
-    add esp, 4
+    ; muestra el menu principal
+    push menu_invalido
+    call printf      
+    push opciones_menu
+    call printf 
+    add esp, 8
 
+    ; se muestra el mensaje para que el usuario elija una de las opciones
+    ; #R: solo numeros
     push mensaje_opcion
     call printf
     add esp, 4
 
-    push eleccion
+    push eleccion 
     push opcion
     call scanf
     add esp, 8
-
-    mov eax, [eleccion]
-    jmp IF
+        mov eax, [eleccion]
+        jmp IF
 
 ; MENU DE SELECCION DE DIFICULTAD
+; Cuando es llamado, retorna un menu donde el user selecciona su dificultad
 _Jugar:
     push Limpiar_consola
     call system
@@ -116,14 +120,16 @@ _Jugar:
     ; se muestra el menu de dificultad
     push mostrar_dificultad
     call printf
-    add esp, 4
+    push opciones_Jugar
+    call printf
+    add esp, 8
 
-    ; se muestra el mensaje para que el usuario elija una de las opciones, solo numeros
+    ; se muestra el mensaje para que el usuario elija una de las opciones
+    ; #R: solo numeros
     push mensaje_opcion
     call printf
     add esp, 4
 
-    
     push eleccion 
     push opcion
     call scanf
@@ -131,7 +137,7 @@ _Jugar:
 
 
 ; FUNCION DE INSTRUCCION
-; cuando es llamado retorna la linea de instrucciones basicas del minijuego
+; cuando es llamado retorna la linea de instrucciones basicas de controles del juego
 _Manual:
     push Limpiar_consola
     call system
