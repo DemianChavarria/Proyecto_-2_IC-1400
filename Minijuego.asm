@@ -11,6 +11,8 @@ extern scanf
 ; SECCCION DATA
 section .data
 
+;#####################################################################################################################
+
 ; COMANDOS
 Limpiar_consola db "clear", 0
 Salir_juego db "exit", 0
@@ -19,7 +21,7 @@ Salir_juego db "exit", 0
 
 ; VARIABLES DE main:
 mostrar_menu db 10, "Entrando al Buscaminas...", 10, 10, 0  ;MENU
-menu_invalido db 10, "Su opcion fue invalida, Seleccione el numero de la opcion en pantalla...", 10, 10, 0  ;MENU
+menu_invalido db 10, "Su opcion fue invalida, Seleccione el numero de la opcion en pantalla...", 10, 10, 0  ;MENU UNIVERSAL
 opciones_menu db "1. Jugar", 10
     db "2. Manual de controles", 10
     db "3. Salir del juego", 10, 10, 0
@@ -28,7 +30,6 @@ opciones_menu db "1. Jugar", 10
 
 ; VARIABLES DE _Jugar:
 mostrar_dificultad db 10, "Se debe seleccionar la dificultad del juego...", 10, 10, 0 ;MENU
-mostrar_dificultad_mal db 10, "Su opcion fue invalida, elija el numero de la opcion en pantalla...", 10, 10, 0 ;MENU
 opciones_Jugar db "1. Dificultad Principiante", 10        
     db "2. Dificultad Intermedio", 10
     db "3. Dificultad Infierno", 10
@@ -38,7 +39,6 @@ opciones_Jugar db "1. Dificultad Principiante", 10
 
 ; VARIABLES DE _Manual
 mostrar_manual db 10, "nada por el momento...", 10, 10, 0 ; MENU
-mostrar_manual_invalido db "es invalido, ingrese una opcion valida", 10, 10, 0
 opciones_Manual db "1. Volver al menu", 10, 0  ; OPCIONES DE MENU
 
 ;#####################################################################################################################
@@ -48,15 +48,21 @@ opciones_Manual db "1. Volver al menu", 10, 0  ; OPCIONES DE MENU
 ;#####################################################################################################################
 
 ; VARIABLES MATRIZ VISIBLE
-celdas db "|   |   |   |   |   |   |   |   |   |", 10, 0
-lineas db "--------------------------------------", 10, 0
+celdas db "| %c | %c | %c | %c | %c | %c | %c | %c | %c |", 10, 0
+lineas db "-----------------------------------------------", 10, 0
 Controles db 10, "1. Marcar una celda", 10
     db "2. Desmarcar una celda", 10
     db "3. Opciones de partida", 10
     db "4. Volver", 10, 10, 0
 Marcar_celda db 10, "ingrese 1 para volver o Marque su celda:", 10, 0
 Desmarque_celda db 10, "ingrese 1 para volver o Desmarque su Celda:", 10, 0
+Opciones_partida db 10, "1, Reanudar Partida", 10, "2, Nueva Partida", 10, "3. Reiniciar Partida", 10, "Abandonar Partida", 10, 10, 0
 
+; CONTROLES...
+Marcador db "X", 0
+
+
+;#####################################################################################################################
 
 
 ;#####################################################################################################################
@@ -78,12 +84,18 @@ celda db "%d", 0
 
 ; (inputs)
 section .bss
+
+;#####################################################################################################################
  
 ; INPUT DE OPCION
 eleccion resd 1
 
+;#####################################################################################################################
+
 ; INPUT DE SELECCION DE CELDA
 celda_seleccionada resd 1
+
+;#####################################################################################################################
 
 
 ;#####################################################################################################################
@@ -103,10 +115,14 @@ main:
 
     ; muestra el menu principal
     push mostrar_menu  
-    call printf    
-    push opciones_menu
     call printf
-    add esp, 8
+    add esp, 4
+
+    Invalido_1:  ; si la opcion ingresada es invalida, hace un salto de regreso aqui
+    
+    push opciones_menu 
+    call printf
+    add esp, 4
 
     ; se muestra el mensaje para que el usuario elija una de las opciones
     ; #R: solo numeros
@@ -121,21 +137,23 @@ main:
     add esp, 4
         mov eax, [eleccion]
     
-    ; IF
-    IF:
-        mov ebx, 1 ; si el User elige 1, llama a la funcion _Jugar
-        cmp eax, ebx
-        je _Jugar
+    mov ebx, 1 ; si el User elige 1, llama a la funcion _Jugar
+    cmp eax, ebx
+    je _Jugar
 
-        mov ebx, 2 ; si el User elige 2, llama a la funcion _Manual
-        cmp eax, ebx
-        je _Manual
+    mov ebx, 2 ; si el User elige 2, llama a la funcion _Manual
+    cmp eax, ebx
+    je _Manual
 
-        mov ebx, 3 ; si el User elige 1, llama a la funcion _Salir
-        cmp eax, ebx
-        je _salir
+    mov ebx, 3 ; si el User elige 1, llama a la funcion _Salir
+    cmp eax, ebx
+    je _salir
 
-    ; ELSE
+    ;#####################################################################################################################
+
+        ; INVALIDO
+
+
     push Limpiar_consola 
     call system
     add esp, 4
@@ -143,22 +161,8 @@ main:
     ; muestra el menu principal
     push menu_invalido
     call printf      
-    push opciones_menu
-    call printf 
-    add esp, 8
-
-    ; se muestra el mensaje para que el usuario elija una de las opciones
-    ; #R: solo numeros
-    push mensaje_opcion
-    call printf
-    add esp, 4
-
-    push eleccion 
-    push opcion
-    call scanf
-    add esp, 8
-        mov eax, [eleccion]
-        jmp IF
+    
+    jmp Invalido_1
 
 
 ;#####################################################################################################################
@@ -175,9 +179,12 @@ _Jugar:
     ; se muestra el menu de dificultad
     push mostrar_dificultad
     call printf
+    add esp, 4
+
+    Invalido_2:  ; si la opcion es invalida, hace un salto de regreso aqui
     push opciones_Jugar
     call printf
-    add esp, 8
+    add esp, 4
 
     ; se muestra el mensaje para que el usuario elija una de las opciones
     ; #R: solo numeros
@@ -185,7 +192,6 @@ _Jugar:
     call printf
     add esp, 4
 
-    salto_J:
     push eleccion 
     push opcion
     call scanf
@@ -195,26 +201,21 @@ _Jugar:
 
     jmp _Crear_matriz
 
-    ; if
+    ;#####################################################################################################################
+        
+        ; INVALIDO
+
     _Jugar_Not:
 
         push Limpiar_consola
         call system
         add esp, 4
 
-        push mostrar_dificultad_mal  ;muestra el menu de la opcion invalida
-        call printf
-        push opciones_Jugar
-        call printf 
-        add esp, 8
-
-        ; se muestra el mensaje para que el usuario elija una de las opciones
-        ; #R: solo numeros
-        push mensaje_opcion   
+        push menu_invalido  ;muestra el menu de la opcion invalida
         call printf
         add esp, 4
         
-        jmp salto_J
+        jmp Invalido_2
 
 
 ;#####################################################################################################################
@@ -224,6 +225,7 @@ _Jugar:
 ; FUNCION DE INSTRUCCION
 ; cuando es llamado retorna la linea de instrucciones basicas de controles del juego
 _Manual:
+    
     push Limpiar_consola
     call system
     add esp, 4
@@ -231,9 +233,13 @@ _Manual:
     ; se muestra el menu de controles
     push mostrar_manual
     call printf
+    add esp, 4
+
+    Invalido_3: ; si la opcion ingresada es invalida, hace un salto de regreso aqui
+
     push opciones_Manual
     call printf
-    add esp, 8
+    add esp, 4
 
     ; se muestra el mensaje para que el usuario elija una de las opciones
     ; #R: solo numeros
@@ -245,36 +251,23 @@ _Manual:
     push opcion
     call scanf
     add esp, 8
+
         mov eax, [eleccion]; la opcion del usuario se guarda en este bloque
 
-    ; IF
-    IF_M:
         mov ebx, 1 ; si el User elige 1, llama a la funcion main
         cmp eax, ebx
         je main
-    
-    ; ELSE
-    
-    ; muestra el menu del manual invalido
-    push mostrar_manual_invalido
-    call printf 
-    push opciones_Manual
-    call printf
-    add esp, 8
 
-    ; se muestra el mensaje para que el usuario elija una de las opciones
-    ; #R: solo numeros
-    push mensaje_opcion
+;#####################################################################################################################
+
+    ; INVALIDO
+
+    ; muestra el menu del manual invalido
+    push menu_invalido
     call printf
     add esp, 4
-
-    ; la opcion del usuario se guarda en este bloque
-    push eleccion
-    push opcion
-    call scanf
-    add esp, 8
-        mov eax, [eleccion]
-        jmp IF_M
+        
+    jmp Invalido_3
 
 
 ;#####################################################################################################################
@@ -299,7 +292,9 @@ _Crear_matriz:
     call system
     add esp, 4
 
-    ; validar opcion
+;#####################################################################################################################
+    ; VALIDANDO OPCION INGRESADA DE _Jugar
+
     cmp esi, 4  ; si es igual a 4, devulevo a main
     je main
 
@@ -308,6 +303,9 @@ _Crear_matriz:
 
     cmp esi, 3   ; SE ES MAYOR A 3 me devuelvo a _jugar
     jg _Jugar_Not
+
+;#####################################################################################################################
+
 
     Regreso: ; si User elige volver, volvera a crear la matriz y lo siguiente
     mov ebx, 0 ; iterador
@@ -374,11 +372,58 @@ _Controles:
     cmp esi, 4
     je Vuelvo
 
+;#####################################################################################################################
+    ; INVALIDO
+        
+        push Limpiar_consola
+        call system
+        add esp, 4
 
+        push menu_invalido ;muestra opcion invalida
+        call printf
+        add esp, 4
+        
+        jmp Regreso
+
+;#####################################################################################################################
+
+    ; AL PRESIONAR 1, EL USER TIENE LA OPCION DE MARCAR 
     Marco:
+
+        jmp MATRIZ_VISIBLE
+        Marco_V:
+
+    ; AL PRESIONAR 2, EL USER TIENE LA OPCION DE DESMARQUE
     Desmarco:
+        
+        jmp MATRIZ_VISIBLE
+        Desmarco_V:
+
+    ; AL PRESIONAR 3, EL USER TENDRA LAS OPCIONES DE PARTIDA, COMO REINICIAR, ABANDONAR O INICIAR NUEVA PARTIDA
     Opciones:
+
+        jmp MATRIZ_VISIBLE
+        Opciones_V:
+
+        push Opciones_partida ; Muestra las Opciones de partida
+        call printf
+        add esp, 4
     
+        push mensaje_opcion
+        call printf
+        add esp, 4
+
+        push eleccion
+        push opcion
+        call scanf 
+        add esp, 8
+
+            mov 
+
+
+
+    
+    ; AL PRESIONAR 4, EL USER VUELVE AL MOMENTO INICIAL
     Vuelvo:
 
         push Limpiar_consola
@@ -392,4 +437,43 @@ _Controles:
 ;#####################################################################################################################
 
 
+; FUNCION DE IMPRIMIR MATRIZ
+; CUANDO ES LLAMADO RETORNA NUEVAMENTE LA MATRIZ Y SE DEVUELVE A DONDE FUE LLAMADO
+MATRIZ_VISIBLE:
+
+    push Limpiar_consola
+    call system
+    add esp, 4
+
+    mov ebx, 1
+
+    While_2:
+
+        push celdas  ; imprime celdas
+        call printf
+        add esp, 4
+            
+        push lineas  ; imprime lineas que separan las celdas
+        call printf
+        add esp, 4
+
+        add ebx, 1 ; sumando iterador
+
+        cmp ebx, 8  ; SI ES MENOR O IGUAL A 9
+        je While_2
+        jl While_2
+    
+    ; SE DEVUELVE A DONDE FUE LLAMADO
+    cmp esi, 1
+    je Marco_V
+
+    cmp esi, 2
+    je Desmarco_V
+
+    cmp esi, 3
+    je Opciones_V
+
+
+;#####################################################################################################################
+;#####################################################################################################################
 
