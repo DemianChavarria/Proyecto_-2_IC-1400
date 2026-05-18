@@ -7,14 +7,3 @@ RUN apt-get update && \
 
 # Create a working directory
 WORKDIR /usr/src/app
-
-# Ccopiar archivos
-COPY Minijuego.asm /usr/src/app
-COPY run.sh /usr/src/app
-
-# Ensamblado con NASM y enlazar con GCC 
-RUN nasm -f elf32 Minijuego.asm -o Minijuego.o && \
-    gcc -m32 Minijuego.o -o juego
-
-# ejecutable
-CMD ["./juego"]
