@@ -2,9 +2,7 @@
 extern printf
 extern system
 extern scanf
-extern rand
-extern srand
-extern time
+
 
 
 ;#####################################################################################################################
@@ -21,39 +19,82 @@ Limpiar_consola db "clear", 0
 Salir_juego db "exit", 0
 
 ;#####################################################################################################################
-
 ; VARIABLES DE main:
-mostrar_menu db 10, "Entrando al Buscaminas...", 10, 10, 0  ;MENU
+ mostrar_menu
+    db "--------------------------------------------------", 10
+    db "                   BUSCAMINAS                     ", 10
+    db "--------------------------------------------------", 10
+    db 10
+    db "Bienvenido al juego de Buscaminas.", 10
+    db "Seleccione una opcion del menu para continuar.", 10
+    db 10, 0
 menu_invalido db 10, "Su opcion fue invalida, Seleccione el numero de la opcion en pantalla...", 10, 10, 0  ;MENU UNIVERSAL
 opciones_menu db "1. Jugar", 10
     db "2. Manual de controles", 10
     db "3. Salir del juego", 10, 10, 0
+    db "--------------------------------------------------"
 
 ;#####################################################################################################################
 
 ; VARIABLES DE _Jugar:
-mostrar_dificultad db 10, "Se debe seleccionar la dificultad del juego...", 10, 10, 0 ;MENU
-opciones_Jugar db "1. Dificultad Principiante", 10        
-    db "2. Dificultad Intermedio", 10
-    db "3. Dificultad Infierno", 10
-    db "4. Volver al menu", 10, 10, 0
+mostrar_dificultad
+    db "--------------------------------------------------", 10
+    db "             SELECCION DE DIFICULTAD              ", 10
+    db "--------------------------------------------------", 10
+    db 10
+    db "Cada dificultad cambia la cantidad de minas.", 10
+    db "Seleccione el nivel que desea jugar.", 10
+    db 10, 0
+opciones_Jugar db "1. Principiante  -> 5 minas", 10        
+    db "2. Intermedio    -> 10 minas", 10
+    db "3. Infierno      -> 15 minas", 10
+    db "4. Volver al menu principal", 10
+    db "--------------------------------------------------", 10, 10, 0
 
 ;#####################################################################################################################
 
 ; VARIABLES DE _Manual
-mostrar_manual db 10, "nada por el momento...", 10, 10, 0 ; MENU
+mostrar_manual db 10, "------------------ MANUAL DEL JUEGO ------------------", 10
+    db 10, "OBJETIVO DEL JUEGO:", 10
+    db "Descubrir todas las celdas del tablero sin explotar una mina.", 10
+
+    db 10, "CONTROLES:", 10
+    db "1. Seleccionar una celda.", 10
+    db "2. Marcar una celda sospechosa con una X.", 10
+    db "3. Desmarcar una celda marcada.", 10
+    db "4. Abrir el menu de opciones de partida.", 10
+
+    db 10, "DIFICULTADES:", 10
+    db "Principiante -> 5 minas.", 10
+    db "Intermedio   -> 10 minas.", 10
+    db "Infierno     -> 15 minas.", 10
+
+    db 10, "REGLAS:", 10
+    db "- Si selecciona una mina, pierde la partida.", 10
+    db "- Los numeros indican minas cercanas.", 10
+    db "- Debe limpiar todo el tablero para ganar.", 10
+
+    db 10, "------------------------------------------------------", 10, 10, 0
 opciones_Manual db "1. Volver al menu", 10, 0  ; OPCIONES DE MENU
+    db "------------------------------------------------------", 10, 10, 0
 
 ;#####################################################################################################################
 
 ; VARIABLES MATRIZ INVISIBLE
 
 ;#####################################################################################################################
-
+;LO HICE ASI PARA PODER IMPRIMIR LA MATRIZ DE FORMA ORDENADA, YA QUE SI LO HAGO CON UN SOLO STRING, NO PUEDO CONTROLAR EL ORDEN DE LOS ELEMENTOS
 ; VARIABLES MATRIZ VISIBLE
-encabezado_cols db 10, "     1   2   3   4   5   6   7   8   9", 10, 0
+encabezado_cols db 10
+    db "-------------------------------------------------", 10
+    db "                    TABLERO                       ", 10
+    db "-------------------------------------------------", 10
+    db 10
+    db "      1   2   3   4   5   6   7   8   9", 10, 0
+
 celdas db " %d | %c | %c | %c | %c | %c | %c | %c | %c | %c |", 10, 0
-lineas db " -----------------------------------------------", 10, 0
+
+lineas db " -------------------------------------------------", 10, 0
 fmt_int db "%d", 0
 
 ;#####################################################################################################################
@@ -64,10 +105,9 @@ Controles db 10, "1. Marcar una celda", 10
 Marcar_celda db 10, "ingrese 1 para volver o Marque su celda:", 10, 0
 Desmarque_celda db 10, "ingrese 1 para volver o Desmarque su Celda:", 10, 0
 Opciones_partida db 10, "1, Reanudar Partida", 10, "2, Nueva Partida", 10, "3. Reiniciar Partida", 10, "Abandonar Partida", 10, 10, 0
-
+;######################################################################################################################
 ; CONTROLES...
 Marcador db 'X'
-
 
 ;#####################################################################################################################
 
@@ -105,7 +145,7 @@ eleccion resd 1
 celda_seleccionada resd 1
 
 ;#####################################################################################################################
-
+;LO HICE ASI PARA PODER CONTROLAR EL ORDEN DE LOS ELEMENTOS
 tablero_oculto resb 81
 tablero_visible resb 81
 ;#####################################################################################################################
@@ -300,8 +340,8 @@ _salir:
 ;#####################################################################################################################
 ;#####################################################################################################################
 
-
-;
+; FUNCION DE CREACION DE MATRIZ
+; cuando es llamado, retorna la creacion de la matriz dependiendo de la dificultad seleccionada
 cantidad_minas:
 
     cmp esi, 1
@@ -311,7 +351,7 @@ cantidad_minas:
     je Intermedio
 
     cmp esi, 3
-    je Extremo
+    je Infierno
 
     jmp _Jugar_Not
 
@@ -324,7 +364,7 @@ Intermedio:
     mov edi, 10
     jmp loop_juego
 
-Extremo:
+Infierno:
     mov edi, 15
     jmp loop_juego
 
@@ -332,8 +372,8 @@ Extremo:
 
 ;#####################################################################################################################
 ;########################################################################################################################################################################################
-
-
+; FUNCION DE JUEGO
+; cuando es llamado, retorna el juego activo, con la matriz creada y las opciones de controles
 loop_juego:
     push Limpiar_consola
     call system
@@ -345,7 +385,6 @@ loop_juego:
     
     jmp limpiar_tableros
     
-
 limpiar_tableros:
     mov esi, 0
 
@@ -354,7 +393,8 @@ limpiar_tableros:
 
 ;#####################################################################################################################
 
-
+; FUNCION DE LIMPIEZA DE TABLEROS
+; cuando es llamado, retorna el tablero oculto y el tablero visible limpios
 limpiar_loop:
     mov byte [tablero_oculto + esi], 0
     mov byte [tablero_visible + esi], '+'
@@ -364,7 +404,8 @@ limpiar_loop:
     jmp Regreso
 ;#####################################################################################################################
 
-
+; FUNCION DE IMPRESION DE TABLERO
+; cuando es llamado, retorna el tablero visible impreso en la consola, con los encabezados de filas y columnas
 imprimir_tablero:
     push ebx
     push esi
@@ -441,14 +482,14 @@ _Crear_matriz:
     cmp esi, 3   ; SE ES MAYOR A 3 me devuelvo a _jugar
     jg _Jugar_Not
 
-    jmp cantidad_minas
+    jmp cantidad_minas ;LO HICE YO, SALTA A LA FUNCION DE CANTIDAD DE MINAS, QUE DEPENDE DE LA DIFICULTAD SELECCIONADA
 ;#####################################################################################################################
 
 
     Regreso: ; si User elige volver, volvera a crear la matriz y lo siguiente
     mov ebx, 0 ; iterador
     
-    call imprimir_tablero
+    call imprimir_tablero ;IMPRIME EL TABLERO DESPUES DE VOLVER DE LOS CONTROLES O DE LAS OPCIONES DE PARTIDA
     ; muestra mensaje de seleccion de celda u controles
     push mensaje_celda
     call printf
@@ -564,8 +605,7 @@ MATRIZ_VISIBLE:
     call system
     add esp, 4
 
-    call imprimir_tablero
-
+    call imprimir_tablero ;IMPRIME EL TABLERO DESPUES DE VOLVER DE LOS CONTROLES O DE LAS OPCIONES DE PARTIDA
     
     ; SE DEVUELVE A DONDE FUE LLAMADO
     cmp esi, 1
