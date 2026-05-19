@@ -2,6 +2,9 @@
 extern printf
 extern system
 extern scanf
+extern rand
+extern srand
+extern time
 
 
 ;#####################################################################################################################
@@ -48,8 +51,12 @@ opciones_Manual db "1. Volver al menu", 10, 0  ; OPCIONES DE MENU
 ;#####################################################################################################################
 
 ; VARIABLES MATRIZ VISIBLE
-celdas db "| %c | %c | %c | %c | %c | %c | %c | %c | %c |", 10, 0
-lineas db "-----------------------------------------------", 10, 0
+encabezado_cols db 10, "     1   2   3   4   5   6   7   8   9", 10, 0
+celdas db " %d | %c | %c | %c | %c | %c | %c | %c | %c | %c |", 10, 0
+lineas db " -----------------------------------------------", 10, 0
+fmt_int db "%d", 0
+
+;#####################################################################################################################
 Controles db 10, "1. Marcar una celda", 10
     db "2. Desmarcar una celda", 10
     db "3. Opciones de partida", 10
@@ -59,7 +66,7 @@ Desmarque_celda db 10, "ingrese 1 para volver o Desmarque su Celda:", 10, 0
 Opciones_partida db 10, "1, Reanudar Partida", 10, "2, Nueva Partida", 10, "3. Reiniciar Partida", 10, "Abandonar Partida", 10, 10, 0
 
 ; CONTROLES...
-Marcador db "X", 0
+Marcador db 'X'
 
 
 ;#####################################################################################################################
@@ -81,6 +88,8 @@ celda db "%d", 0
 ;#####################################################################################################################
 ;#####################################################################################################################
 
+;#######################################################################################################################
+
 
 ; (inputs)
 section .bss
@@ -97,8 +106,8 @@ celda_seleccionada resd 1
 
 ;#####################################################################################################################
 
-
-;#####################################################################################################################
+tablero_oculto resb 81
+tablero_visible resb 81
 ;#####################################################################################################################
 
 
@@ -134,7 +143,7 @@ main:
     push eleccion
     push opcion
     call scanf
-    add esp, 4
+    add esp, 8
         mov eax, [eleccion]
     
     mov ebx, 1 ; si el User elige 1, llama a la funcion _Jugar
@@ -201,7 +210,7 @@ _Jugar:
 
     jmp _Crear_matriz
 
-    ;#####################################################################################################################
+;#####################################################################################################################
         
         ; INVALIDO
 
@@ -216,6 +225,8 @@ _Jugar:
         add esp, 4
         
         jmp Invalido_2
+
+;#####################################################################################################################
 
 
 ;#####################################################################################################################
@@ -269,6 +280,9 @@ _Manual:
         
     jmp Invalido_3
 
+;#####################################################################################################################
+
+
 
 ;#####################################################################################################################
 ;#####################################################################################################################
@@ -286,6 +300,129 @@ _salir:
 ;#####################################################################################################################
 ;#####################################################################################################################
 
+
+;
+cantidad_minas:
+
+    cmp esi, 1
+    je Principiante
+
+    cmp esi, 2
+    je Intermedio
+
+    cmp esi, 3
+    je Extremo
+
+    jmp _Jugar_Not
+
+
+Principiante:
+    mov edi, 5
+    jmp loop_juego
+
+Intermedio:
+    mov edi, 10
+    jmp loop_juego
+
+Extremo:
+    mov edi, 15
+    jmp loop_juego
+
+
+
+;#####################################################################################################################
+;########################################################################################################################################################################################
+
+
+loop_juego:
+    push Limpiar_consola
+    call system
+    add esp, 4
+    
+    push Controles
+    call printf
+    add esp, 4
+    
+    jmp limpiar_tableros
+    
+
+limpiar_tableros:
+    mov esi, 0
+
+    jmp limpiar_loop
+
+
+;#####################################################################################################################
+
+
+limpiar_loop:
+    mov byte [tablero_oculto + esi], 0
+    mov byte [tablero_visible + esi], '+'
+    inc esi
+    cmp esi, 81
+    jl limpiar_loop
+    jmp Regreso
+;#####################################################################################################################
+
+
+imprimir_tablero:
+    push ebx
+    push esi
+    push edi
+
+    push encabezado_cols
+    call printf
+    add esp, 4
+
+    xor esi, esi
+    xor edi, edi
+
+filas_loop:
+    mov eax, edi
+    inc eax
+
+    movzx edx, byte [tablero_visible + esi + 8]
+    push edx
+    movzx edx, byte [tablero_visible + esi + 7]
+    push edx
+    movzx edx, byte [tablero_visible + esi + 6]
+    push edx
+    movzx edx, byte [tablero_visible + esi + 5]
+    push edx
+    movzx edx, byte [tablero_visible + esi + 4]
+    push edx
+    movzx edx, byte [tablero_visible + esi + 3]
+    push edx
+    movzx edx, byte [tablero_visible + esi + 2]
+    push edx
+    movzx edx, byte [tablero_visible + esi + 1]
+    push edx
+    movzx edx, byte [tablero_visible + esi]
+    push edx
+
+    push eax
+    push celdas
+    call printf
+    add esp, 44
+
+    push lineas
+    call printf
+    add esp, 4
+
+    add esi, 9
+    inc edi
+    cmp edi, 9
+    jl filas_loop
+
+    pop edi
+    pop esi
+    pop ebx
+    
+    ret
+;##############################################################################################################################################################################
+
+
+;Funcion
 _Crear_matriz:
 
     push Limpiar_consola
@@ -304,27 +441,14 @@ _Crear_matriz:
     cmp esi, 3   ; SE ES MAYOR A 3 me devuelvo a _jugar
     jg _Jugar_Not
 
+    jmp cantidad_minas
 ;#####################################################################################################################
 
 
     Regreso: ; si User elige volver, volvera a crear la matriz y lo siguiente
     mov ebx, 0 ; iterador
     
-    While_1:
-        add ebx, 1
-
-        push celdas  ; imprime celdas
-        call printf
-        add esp, 4
-        
-        push lineas  ; imprime lineas que separan las celdas
-        call printf
-        add esp, 4
-
-        cmp ebx, 8  ; SI ES MENOR O IGUAL A 9
-        je While_1
-        jl While_1
-    
+    call imprimir_tablero
     ; muestra mensaje de seleccion de celda u controles
     push mensaje_celda
     call printf
@@ -416,12 +540,7 @@ _Controles:
         push eleccion
         push opcion
         call scanf 
-        add esp, 8
-
-            mov 
-
-
-
+        add esp, 8      
     
     ; AL PRESIONAR 4, EL USER VUELVE AL MOMENTO INICIAL
     Vuelvo:
@@ -445,23 +564,8 @@ MATRIZ_VISIBLE:
     call system
     add esp, 4
 
-    mov ebx, 1
+    call imprimir_tablero
 
-    While_2:
-
-        push celdas  ; imprime celdas
-        call printf
-        add esp, 4
-            
-        push lineas  ; imprime lineas que separan las celdas
-        call printf
-        add esp, 4
-
-        add ebx, 1 ; sumando iterador
-
-        cmp ebx, 8  ; SI ES MENOR O IGUAL A 9
-        je While_2
-        jl While_2
     
     ; SE DEVUELVE A DONDE FUE LLAMADO
     cmp esi, 1
