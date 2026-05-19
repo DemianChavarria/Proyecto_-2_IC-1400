@@ -19,7 +19,7 @@ El objetivo era recrear el reconocido juego multiplataformero de Buscaminas del 
 
 # Retos afrontados
 
-El principal reto fue hacer una matriz que puediera cumplir con los estandares del minijuego.
+El principal reto y no logrado, fue llegar a recrear una cuadricula o matriz que pueda realizar funciones apegadas a como lo haria el minijuego del buscaminas. 
 
 
 
